@@ -145,7 +145,6 @@ class TradingGraph:
         """
         # Clear the frame rendered last step
         self.net_worth_ax.clear()
-        print(type(current_step))
         # Plot net worths
         self.net_worth_ax.plot(
             dates, portfolio[step_range], label='Net Worth', color="g")
