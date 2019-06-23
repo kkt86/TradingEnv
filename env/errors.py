@@ -14,3 +14,7 @@ class TypePositionError(BaseException):
 
 class RenderModeError(BaseException):
     """Raised render mode is not correct"""
+
+
+class DataShapeError(BaseException):
+    """Raised when problems with data shape"""

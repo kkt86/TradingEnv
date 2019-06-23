@@ -11,7 +11,7 @@ from empyrical import sortino_ratio, calmar_ratio, omega_ratio
 from gym import spaces
 from sklearn.preprocessing import MinMaxScaler
 
-from env.errors import ActionValueError, PositionError, TypePositionError, RenderModeError
+from env.errors import ActionValueError, PositionError, TypePositionError, RenderModeError, DataShapeError
 from env.viewer import TradingGraph
 from util.logger import get_logger
 from util.stationarization import log_and_difference
@@ -96,8 +96,8 @@ class TradingEnv(gym.Env):
 
         return next_state, reward, done, {}
 
-    def close(self):
-        """todo: finish this"""
+    def close(self) -> None:
+        """Close viewer"""
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
@@ -116,18 +116,18 @@ class TradingEnv(gym.Env):
         try:
             assert action in range(env.action_space.n), "action value: {} should be in {}".format(action, range(
                 env.action_space.n))
-            close_price = self._get_close_price()
+            trade_price = self._get_trade_price()
 
             if self.position is None:
                 if action == 1:
-                    self._open_position(price=close_price, position_type='LONG')
+                    self._open_position(price=trade_price, position_type='LONG')
                 elif action == 2:
-                    self._open_position(price=close_price, position_type='SHORT')
+                    self._open_position(price=trade_price, position_type='SHORT')
             else:
                 if self.position.type == 'LONG' and action == 2:
-                    self._close_position(price=close_price)
+                    self._close_position(price=trade_price)
                 elif self.position.type == 'SHORT' and action == 1:
-                    self._close_position(price=close_price)
+                    self._close_position(price=trade_price)
                 else:
                     pass
         except AssertionError as error:
@@ -227,11 +227,19 @@ class TradingEnv(gym.Env):
 
         return obs
 
-    def _get_close_price(self) -> np.float32:
+    def _get_trade_price(self) -> np.float32:
         """
-        :return: current close price
+        This method returns the price, at which assets should be traded. Depending on the initial configuration,
+        it either returns the close price of the current bar (if trade_on_open is False) or the open price of
+        the next bar (if trade_on_open is True). In this way, a better market simulation is obtained.
+        :return: price at which assets should be traded
         """
-        return self._data['close'].values[self.current_step]
+        if self.current_step == len(self._data) and self._trade_on_open:
+            self._logger.error("Last data entry reached")
+            raise DataShapeError("Last data entry reached")
+
+        return self._data['open'].values[self.current_step + 1] if self._trade_on_open else \
+            self._data['close'].values[self.current_step]
 
     def _get_reward(self) -> float:
         """
@@ -270,7 +278,7 @@ class TradingEnv(gym.Env):
             return True
 
         # return True, if arrived at last entry of data
-        if self.current_step == len(self._data) - 1:
+        if self.current_step == len(self._data) - 1 - int(self._trade_on_open):
             return True
 
         return False
@@ -282,7 +290,7 @@ class TradingEnv(gym.Env):
 
         The updated vale of the portfolio us appended the the portfolio array
         """
-        current_price = self._get_close_price()
+        current_price = self._get_trade_price()
         value = self.cash
         if self.position is not None:
             if self.position.type == 'LONG':
@@ -291,17 +299,19 @@ class TradingEnv(gym.Env):
                 value += self.position.shares * (self.position.entry_price - current_price)
         self.portfolio.append(value)
 
-    def render(self, mode='system'):
+    def render(self, mode: str = 'system') -> None:
         """
-        todo: add docstring
-        todo: refactor in separate functions
+        Renders a step of the simulation.
+        If mode == 'system', logs are printed in Terminal.
+        If mode == 'human', visualization is displayed.
+        :param mode: type of rendering mode (system or human)
         """
         if mode not in ['system', 'human']:
             raise RenderModeError("Render mode should be either 'system' or 'human', provided: {}".format(mode))
 
         if mode == 'system':
             step = self.current_step
-            price = self._get_close_price()
+            price = self._get_trade_price()
             position_type = 'None' if not self.position else self.position.type
             shares = 0 if not self.position else self.position.shares
             entry_price = 0 if not self.position else self.position.entry_price
@@ -338,7 +348,7 @@ if __name__ == '__main__':
     for _ in range(0, len(df) - 1):
         action = np.random.random_integers(0, 2)
         next_state, reward, done, _ = env.step(action)
-        env.render(mode='human')
+        env.render(mode='system')
 
         if done:
             break
