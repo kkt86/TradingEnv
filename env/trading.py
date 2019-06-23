@@ -26,7 +26,8 @@ class TradingEnv(gym.Env):
 
     def __init__(self, data: pd.DataFrame, feature_columns: List[str],
                  initial_balance: float = 10000, commission: float = 0.0025,
-                 reward_function: str = 'sortino', returns_lookback: int = 100) -> None:
+                 reward_function: str = 'sortino', returns_lookback: int = 100,
+                 trade_on_open: bool = True) -> None:
         """
         :param data: pandas DataFrame, containing data for the simulation,
                      'open', 'high', 'low', 'close', 'volume' columns should be present
@@ -35,6 +36,7 @@ class TradingEnv(gym.Env):
         :param commission: commission to be applied on trading
         :param reward_function: type of reward function, calmar, sortino and omega allowed
         :param returns_lookback: last values in portfolio to be used when computing the reward
+        :param trade_on_open: Use next entry open price as price to open/close positions
         """
         super(TradingEnv, self).__init__()
         self._logger = get_logger(self.__class__.__name__)
@@ -49,6 +51,7 @@ class TradingEnv(gym.Env):
         self._commission = commission
         self._reward_function = reward_function
         self._returns_lookback = returns_lookback
+        self._trade_on_open = trade_on_open
 
         # state and action spaces
         self._obs_shape = (1, len(self._feature_cols))  # todo: add account info here
