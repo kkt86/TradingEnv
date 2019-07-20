@@ -1,78 +1,66 @@
 import ta
 
+from util.errors import IndicatorsError
+from util.logger import get_logger
 
-def add_indicators(df):
-    df['RSI'] = ta.rsi(df["close"])
-    df['MFI'] = ta.money_flow_index(
-        df["high"], df["low"], df["close"], df["volume"])
-    df['TSI'] = ta.tsi(df["close"])
-    df['UO'] = ta.uo(df["high"], df["low"], df["close"])
-    df['AO'] = ta.ao(df["high"], df["low"])
+LOGGER = get_logger(__file__.__name__)
 
-    df['MACD_diff'] = ta.macd_diff(df["close"])
-    df['Vortex_pos'] = ta.vortex_indicator_pos(
-        df["high"], df["low"], df["close"])
-    df['Vortex_neg'] = ta.vortex_indicator_neg(
-        df["high"], df["low"], df["close"])
-    df['Vortex_diff'] = abs(
-        df['Vortex_pos'] -
-        df['Vortex_neg'])
-    df['Trix'] = ta.trix(df["close"])
-    df['Mass_index'] = ta.mass_index(df["high"], df["low"])
-    df['CCI'] = ta.cci(df["high"], df["low"], df["close"])
-    df['DPO'] = ta.dpo(df["close"])
-    df['KST'] = ta.kst(df["close"])
-    df['KST_sig'] = ta.kst_sig(df["close"])
-    df['KST_diff'] = (
-            df['KST'] -
-            df['KST_sig'])
-    df['Aroon_up'] = ta.aroon_up(df["close"])
-    df['Aroon_down'] = ta.aroon_down(df["close"])
-    df['Aroon_ind'] = (
-            df['Aroon_up'] -
-            df['Aroon_down']
-    )
 
-    df['BBH'] = ta.bollinger_hband(df["close"])
-    df['BBL'] = ta.bollinger_lband(df["close"])
-    df['BBM'] = ta.bollinger_mavg(df["close"])
-    df['BBHI'] = ta.bollinger_hband_indicator(
-        df["close"])
-    df['BBLI'] = ta.bollinger_lband_indicator(
-        df["close"])
-    df['KCHI'] = ta.keltner_channel_hband_indicator(df["high"],
-                                                    df["low"],
-                                                    df["close"])
-    df['KCLI'] = ta.keltner_channel_lband_indicator(df["high"],
-                                                    df["low"],
-                                                    df["close"])
-    df['DCHI'] = ta.donchian_channel_hband_indicator(df["close"])
-    df['DCLI'] = ta.donchian_channel_lband_indicator(df["close"])
+def add_indicators(data):
+    """todo: add docstring
+    """
+    assert 'open' in data.columns, "open column not present or with different name"
+    assert 'high' in data.columns, "high column not present or with different name"
+    assert 'low' in data.columns, "low column not present or with different name"
+    assert 'close' in data.columns, "close column not present or with different name"
 
-    df['ADI'] = ta.acc_dist_index(df["high"],
-                                  df["low"],
-                                  df["close"],
-                                  df["Volume BTC"])
-    df['OBV'] = ta.on_balance_volume(df["close"],
-                                     df["Volume BTC"])
-    df['CMF'] = ta.chaikin_money_flow(df["high"],
-                                      df["low"],
-                                      df["close"],
-                                      df["volume"])
-    df['FI'] = ta.force_index(df["close"],
-                              df["volume"])
-    df['EM'] = ta.ease_of_movement(df["high"],
-                                   df["low"],
-                                   df["close"],
-                                   df["volume"])
-    df['VPT'] = ta.volume_price_trend(df["close"],
-                                      df["volume"])
-    df['NVI'] = ta.negative_volume_index(df["close"],
-                                         df["volume"])
+    try:
+        data['RSI'] = ta.rsi(data["close"])
+        data['TSI'] = ta.tsi(data["close"])
+        data['UO'] = ta.uo(data["high"], data["low"], data["close"])
+        data['AO'] = ta.ao(data["high"], data["low"])
+        data['MACD_diff'] = ta.macd_diff(data["close"])
+        data['Vortex_pos'] = ta.vortex_indicator_pos(data["high"], data["low"], data["close"])
+        data['Vortex_neg'] = ta.vortex_indicator_neg(data["high"], data["low"], data["close"])
+        data['Vortex_diff'] = abs(data['Vortex_pos'] - data['Vortex_neg'])
+        data['Trix'] = ta.trix(data["close"])
+        data['Mass_index'] = ta.mass_index(data["high"], data["low"])
+        data['CCI'] = ta.cci(data["high"], data["low"], data["close"])
+        data['DPO'] = ta.dpo(data["close"])
+        data['KST'] = ta.kst(data["close"])
+        data['KST_sig'] = ta.kst_sig(data["close"])
+        data['KST_diff'] = (data['KST'] - data['KST_sig'])
+        data['Aroon_up'] = ta.aroon_up(data["close"])
+        data['Aroon_down'] = ta.aroon_down(data["close"])
+        data['Aroon_ind'] = (data['Aroon_up'] - data['Aroon_down'])
+        data['BBH'] = ta.bollinger_hband(data["close"])
+        data['BBL'] = ta.bollinger_lband(data["close"])
+        data['BBM'] = ta.bollinger_mavg(data["close"])
+        data['BBHI'] = ta.bollinger_hband_indicator(data["close"])
+        data['BBLI'] = ta.bollinger_lband_indicator(data["close"])
+        data['KCHI'] = ta.keltner_channel_hband_indicator(data["high"], data["low"], data["close"])
+        data['KCLI'] = ta.keltner_channel_lband_indicator(data["high"], data["low"], data["close"])
+        data['DCHI'] = ta.donchian_channel_hband_indicator(data["close"])
+        data['DCLI'] = ta.donchian_channel_lband_indicator(data["close"])
+        data['DR'] = ta.daily_return(data["close"])
+        data['DLR'] = ta.daily_log_return(data["close"])
 
-    df['DR'] = ta.daily_return(df["close"])
-    df['DLR'] = ta.daily_log_return(df["close"])
+        if 'volume' in data.columns:
+            data['MFI'] = ta.money_flow_index(data["high"], data["low"], data["close"], data["volume"])
+            data['ADI'] = ta.acc_dist_index(data["high"], data["low"], data["close"], data["volume"])
+            data['OBV'] = ta.on_balance_volume(data["close"], data["volume"])
+            data['CMF'] = ta.chaikin_money_flow(data["high"], data["low"], data["close"], data["volume"])
+            data['FI'] = ta.force_index(data["close"], data["volume"])
+            data['EM'] = ta.ease_of_movement(data["high"], data["low"], data["close"], data["volume"])
+            data['VPT'] = ta.volume_price_trend(data["close"], data["volume"])
+            data['NVI'] = ta.negative_volume_index(data["close"], data["volume"])
 
-    df.fillna(method='bfill', inplace=True)
+        data.fillna(method='bfill', inplace=True)
 
-    return df
+        return data
+
+    except (AssertionError, Exception) as error:
+        raise IndicatorsError(error)
+        LOGGER.error(error)
+
+

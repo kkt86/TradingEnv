@@ -348,7 +348,7 @@ if __name__ == '__main__':
     for _ in range(0, len(df) - 1):
         action = np.random.random_integers(0, 2)
         next_state, reward, done, _ = env.step(action)
-        env.render(mode='system')
+        env.render(mode='human')
 
         if done:
             break
