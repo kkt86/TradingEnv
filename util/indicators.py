@@ -1,4 +1,5 @@
 import ta
+import pandas as pd
 
 from util.errors import IndicatorsError
 from util.logger import get_logger
@@ -6,8 +7,12 @@ from util.logger import get_logger
 LOGGER = get_logger(__file__.__name__)
 
 
-def add_indicators(data):
-    """todo: add docstring
+def add_indicators(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    This method creates technical indicators, based on the OHLC and volume bars
+    :param data: pandas DataFrame, containing open, high, low and close and
+                 optional volume columns
+    :return: DataFrame with added technical indicators
     """
     assert 'open' in data.columns, "open column not present or with different name"
     assert 'high' in data.columns, "high column not present or with different name"
